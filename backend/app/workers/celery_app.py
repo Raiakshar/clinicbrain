@@ -6,4 +6,5 @@ celery_app = Celery(
     "clinicbrain",
     broker=settings.redis_url,
     backend=settings.redis_url,
+    include=["app.workers.tasks"],
 )
