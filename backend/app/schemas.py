@@ -35,10 +35,12 @@ class PatientCreate(BaseModel):
     phone: str | None = None
     dob: dt.date | None = None
     gender: str | None = None
+    whatsapp_consent: bool = True
 
 
 class PatientOut(PatientCreate):
     id: int
+    whatsapp_consent: bool | None = None
 
     model_config = {"from_attributes": True}
 

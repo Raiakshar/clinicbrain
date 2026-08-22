@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     extraction_provider: str = "gpt"
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+    whatsapp_provider: str = "simulated"
+    meta_phone_number_id: str = ""
+    meta_access_token: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

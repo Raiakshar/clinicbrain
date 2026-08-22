@@ -41,6 +41,7 @@ class Patient(Base):
     gender: Mapped[str | None] = mapped_column(String(20))
     allergies: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     chronic_conditions: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
+    whatsapp_consent: Mapped[bool | None] = mapped_column(default=True)
 
 
 class TimelineEvent(Base):
@@ -102,4 +103,32 @@ class LabResult(Base):
     ref_high: Mapped[float | None] = mapped_column(Numeric(12, 4))
     flag: Mapped[str] = mapped_column(String(10), default="normal")
     taken_at: Mapped[dt.date | None] = mapped_column(Date)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class QueueToken(Base):
+    __tablename__ = "queue_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    clinic_id: Mapped[int] = mapped_column(ForeignKey("clinics.id"), nullable=False)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), nullable=False)
+    date: Mapped[dt.date] = mapped_column(Date)
+    number: Mapped[int]
+    status: Mapped[str] = mapped_column(String(20), default="waiting")
+    checked_in_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class WhatsAppLog(Base):
+    __tablename__ = "whatsapp_log"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), nullable=False)
+    template: Mapped[str] = mapped_column(String(50))
+    body: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="retrying")
+    retries: Mapped[int] = mapped_column(default=0)
+    error: Mapped[str | None] = mapped_column(Text)
+    sent_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

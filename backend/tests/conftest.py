@@ -89,6 +89,8 @@ def stub_task(monkeypatch):
     stub = StubTask()
     monkeypatch.setattr(worker_tasks, "extract_document_task", stub)
     monkeypatch.setattr(worker_tasks, "extract_labs_task", stub)
+    monkeypatch.setattr(worker_tasks.send_whatsapp_task, "delay", stub.delay)
+    monkeypatch.setattr(worker_tasks.followup_reminders_task, "delay", stub.delay)
     return stub
 
 
