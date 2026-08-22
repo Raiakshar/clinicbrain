@@ -23,9 +23,10 @@ Photo → structured `{test_name, value, unit, ref_low, ref_high}` rows → rege
 **Built:** lab auto-chain after base extraction when doc type is `lab`; `extract-labs` rerun task; confirm-labs endpoint with numeric regex validation + flag computation (normal|high|low|review); patient labs summary + trend endpoints; frontend Labs tab with SVG trend chart and editable lab review table. 21 backend tests green.
 **Plan:** implemented directly against spec §6.2 + §7 trust rules.
 
-## Phase 3 — Queue + WhatsApp Follow-ups
+## Phase 3 — Queue + WhatsApp Follow-ups ✅ built
 `queue_tokens` flow (issue → confirm → "your turn"), Meta WhatsApp Cloud API integration with retry/backoff + `whatsapp_log`, cron reminder 1 day before `followup_date`.
-**Plan:** written after Phase 2 completes.
+**Built:** migration 0005 (queue_tokens, whatsapp_log, patients.whatsapp_consent); provider abstraction (`simulated` default, `meta` for Graph API) selected by settings; `whatsapp.send` Celery task with autoretry ×3 exponential backoff → sent/retrying/failed on dashboard; queue endpoints (check-in with per-clinic sequential numbers + re-check-in dedupe, today's queue, call with single-in_consult guard, complete); hourly beat task scanning prescription events' `followup_date` with idempotency check; consent gate skips messaging; frontend Queue page with 5s-polling token list, patient search check-in, and WhatsApp message log. 27 backend tests green; live E2E verified sent/failed/reminder paths.
+**Plan:** implemented directly against spec §queue requirements + DPDP consent note.
 
 ## Phase 4 — Rx Safety Checker
 `drug_reference` seed data, rules engine (allergy hard-block, interaction warning, max-dose warning) + inline API while prescribing; prescription UI with warnings before save.

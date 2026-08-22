@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import PatientDetail from "./pages/PatientDetail";
 import Patients from "./pages/Patients";
 import Review from "./pages/Review";
+import Queue from "./pages/Queue";
 import Signup from "./pages/Signup";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,14 @@ export default function App() {
               element={
                 <Protected>
                   <Review />
+                </Protected>
+              }
+            />
+            <Route
+              path="/queue"
+              element={
+                <Protected>
+                  <Queue />
                 </Protected>
               }
             />
