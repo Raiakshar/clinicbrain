@@ -9,6 +9,7 @@ from app.db import get_db
 from app.main import app
 from app.models import Base
 from app.services.storage import get_storage
+from app.workers import tasks as worker_tasks
 
 TEST_DB_URL = "postgresql+asyncpg://clinicbrain:clinicbrain@localhost:5433/clinicbrain_test"
 ADMIN_URL = "postgresql+asyncpg://clinicbrain:clinicbrain@localhost:5433/clinicbrain"
@@ -75,6 +76,22 @@ def fake_storage():
     return FakeStorage()
 
 
+class StubTask:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def delay(self, document_id: str) -> None:
+        self.calls.append(document_id)
+
+
+@pytest.fixture
+def stub_task(monkeypatch):
+    stub = StubTask()
+    monkeypatch.setattr(worker_tasks, "extract_document_task", stub)
+    monkeypatch.setattr(worker_tasks, "extract_labs_task", stub)
+    return stub
+
+
 @pytest.fixture
 def client(db_session, fake_storage, monkeypatch) -> httpx.AsyncClient:
     from app.workers import tasks as worker_tasks
@@ -83,9 +100,13 @@ def client(db_session, fake_storage, monkeypatch) -> httpx.AsyncClient:
         async with db_session() as session:
             yield session
 
+    class FakeEngine:
+        async def dispose(self):
+            return None
+
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_storage] = lambda: fake_storage
-    monkeypatch.setattr(worker_tasks, "SessionLocal", db_session)
+    monkeypatch.setattr(worker_tasks, "get_session_maker", lambda: (db_session, FakeEngine()))
     monkeypatch.setattr(worker_tasks, "get_storage", lambda: fake_storage)
     monkeypatch.setattr(settings, "extraction_provider", "fake")
     transport = httpx.ASGITransport(app=app)

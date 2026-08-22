@@ -18,9 +18,10 @@ Deferred out of Phase 1: Gemini fallback activation (interface ready), golden-se
 
 **Plan:** `docs/superpowers/plans/2026-08-21-phase1-data-core-records-digitizer.md`
 
-## Phase 2 — Lab Report Reader
+## Phase 2 — Lab Report Reader ✅ built
 Photo → structured `{test_name, value, unit, ref_low, ref_high}` rows → regex validation → draft table → confirm → `lab_results` → trend charts. Reuses Phase 1 upload/draft/confirm pipeline with a new extractor.
-**Plan:** written after Phase 1 completes.
+**Built:** lab auto-chain after base extraction when doc type is `lab`; `extract-labs` rerun task; confirm-labs endpoint with numeric regex validation + flag computation (normal|high|low|review); patient labs summary + trend endpoints; frontend Labs tab with SVG trend chart and editable lab review table. 21 backend tests green.
+**Plan:** implemented directly against spec §6.2 + §7 trust rules.
 
 ## Phase 3 — Queue + WhatsApp Follow-ups
 `queue_tokens` flow (issue → confirm → "your turn"), Meta WhatsApp Cloud API integration with retry/backoff + `whatsapp_log`, cron reminder 1 day before `followup_date`.

@@ -2,9 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api";
-import type { Doc } from "../types";
+import type { Doc, LabDraftRow } from "../types";
 
 const TYPES = ["visit", "prescription", "lab", "letter", "report"] as const;
+
+function rowsFromDoc(doc: Doc | null): LabDraftRow[] {
+  return doc?.extracted?.labs?.length ? doc.extracted.labs : [];
+}
 
 export default function Review() {
   const [params, setParams] = useSearchParams();
@@ -27,6 +31,7 @@ export default function Review() {
 
   const docId = Number(params.get("doc") ?? queue[0]?.id ?? 0);
   const doc = queue.find((d) => d.id === docId) ?? null;
+  const isLabDoc = doc?.extracted?.labs != null || doc?.extracted?.lab_error != null;
 
   const [form, setForm] = useState({
     document_type: "report",
@@ -34,6 +39,8 @@ export default function Review() {
     summary: "",
     content_text: "",
   });
+  const [labRows, setLabRows] = useState<LabDraftRow[]>([]);
+  const [labDate, setLabDate] = useState("");
 
   useEffect(() => {
     if (doc?.extracted) {
@@ -43,6 +50,8 @@ export default function Review() {
         summary: doc.extracted.summary ?? "",
         content_text: doc.extracted.content_text ?? "",
       });
+      setLabRows(rowsFromDoc(doc));
+      setLabDate(doc.extracted.event_date ?? "");
     }
   }, [docId]);
 
@@ -87,14 +96,30 @@ export default function Review() {
     },
   });
 
+  const confirmLabs = useMutation({
+    mutationFn: async () =>
+      api.post(`/documents/${docId}/confirm-labs`, {
+        rows: labRows.map((r) => ({ ...r, taken_at: r.taken_at || labDate || null })),
+      }),
+    onSuccess: () => {
+      invalidate();
+      flash("Labs added to timeline");
+      advance();
+    },
+  });
+
   const retry = useMutation({
     mutationFn: async (id: number) => api.post(`/documents/${id}/retry`),
     onSuccess: invalidate,
   });
 
+  const updateRow = (i: number, key: keyof LabDraftRow, value: string) =>
+    setLabRows((rows) => rows.map((r, j) => (j === i ? { ...r, [key]: value } : r)));
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    confirm.mutate();
+    if (isLabDoc) confirmLabs.mutate();
+    else confirm.mutate();
   };
 
   return (
@@ -162,52 +187,132 @@ export default function Review() {
               className="max-h-[70vh] w-full object-contain bg-slate-100 rounded-lg border border-slate-200"
             />
             <form onSubmit={onSubmit} className="space-y-3">
-              <label className="block text-sm">
-                <span className="text-slate-500">Document type</span>
-                <select
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
-                  value={form.document_type}
-                  onChange={(e) => setForm((f) => ({ ...f, document_type: e.target.value }))}
-                >
-                  {TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-sm">
-                <span className="text-slate-500">Date on document</span>
-                <input
-                  type="date"
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
-                  value={form.event_date}
-                  onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="text-slate-500">Summary</span>
-                <input
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
-                  value={form.summary}
-                  onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="text-slate-500">Extracted text</span>
-                <textarea
-                  rows={12}
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 font-mono text-xs"
-                  value={form.content_text}
-                  onChange={(e) => setForm((f) => ({ ...f, content_text: e.target.value }))}
-                />
-              </label>
+              {isLabDoc ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-700">Lab results draft</h3>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLabRows((r) => [
+                          ...r,
+                          { test_name: "", value: "", unit: "", ref_low: "", ref_high: "" },
+                        ])
+                      }
+                      className="text-xs border border-slate-300 rounded-lg px-2 py-1 hover:bg-slate-50"
+                    >
+                      + Add row
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-[52vh] overflow-y-auto pr-1">
+                    {labRows.map((row, i) => (
+                      <div key={i} className="border border-slate-200 rounded-lg p-2 grid grid-cols-10 gap-1.5 items-center">
+                        <input
+                          className="col-span-3 border border-slate-200 rounded px-2 py-1 text-sm"
+                          placeholder="Test name"
+                          value={String(row.test_name ?? "")}
+                          onChange={(e) => updateRow(i, "test_name", e.target.value)}
+                        />
+                        <input
+                          className="col-span-2 border border-slate-200 rounded px-2 py-1 text-sm"
+                          placeholder="Value"
+                          value={String(row.value ?? "")}
+                          onChange={(e) => updateRow(i, "value", e.target.value)}
+                        />
+                        <input
+                          className="col-span-2 border border-slate-200 rounded px-2 py-1 text-sm"
+                          placeholder="Unit"
+                          value={String(row.unit ?? "")}
+                          onChange={(e) => updateRow(i, "unit", e.target.value)}
+                        />
+                        <input
+                          className="col-span-1 border border-slate-200 rounded px-2 py-1 text-sm"
+                          placeholder="Low"
+                          value={String(row.ref_low ?? "")}
+                          onChange={(e) => updateRow(i, "ref_low", e.target.value)}
+                        />
+                        <input
+                          className="col-span-1 border border-slate-200 rounded px-2 py-1 text-sm"
+                          placeholder="High"
+                          value={String(row.ref_high ?? "")}
+                          onChange={(e) => updateRow(i, "ref_high", e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setLabRows((rows) => rows.filter((_, j) => j !== i))}
+                          className="col-span-1 text-red-500 hover:text-red-700 text-sm"
+                          title="Remove row"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    {labRows.length === 0 && (
+                      <p className="text-sm text-slate-400">
+                        No rows extracted{doc?.extracted?.lab_error ? ` — ${doc.extracted.lab_error}` : ""}. Add rows manually or re-run extraction from the queue.
+                      </p>
+                    )}
+                  </div>
+                  <label className="block text-sm">
+                    <span className="text-slate-500">Date on report</span>
+                    <input
+                      type="date"
+                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
+                      value={labDate}
+                      onChange={(e) => setLabDate(e.target.value)}
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label className="block text-sm">
+                    <span className="text-slate-500">Document type</span>
+                    <select
+                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
+                      value={form.document_type}
+                      onChange={(e) => setForm((f) => ({ ...f, document_type: e.target.value }))}
+                    >
+                      {TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm">
+                    <span className="text-slate-500">Date on document</span>
+                    <input
+                      type="date"
+                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
+                      value={form.event_date}
+                      onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="text-slate-500">Summary</span>
+                    <input
+                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
+                      value={form.summary}
+                      onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="text-slate-500">Extracted text</span>
+                    <textarea
+                      rows={12}
+                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 font-mono text-xs"
+                      value={form.content_text}
+                      onChange={(e) => setForm((f) => ({ ...f, content_text: e.target.value }))}
+                    />
+                  </label>
+                </>
+              )}
               <div className="flex gap-3 pt-2">
                 <button
-                  disabled={confirm.isPending}
+                  disabled={(isLabDoc ? confirmLabs.isPending : confirm.isPending) || labRows.length === 0}
                   className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Confirm → Timeline
+                  {isLabDoc ? `Confirm ${labRows.length} labs → Timeline` : "Confirm → Timeline"}
                 </button>
                 <button
                   type="button"

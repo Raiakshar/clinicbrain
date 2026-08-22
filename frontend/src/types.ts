@@ -35,6 +35,17 @@ export interface Extracted {
   event_date?: string | null;
   summary?: string;
   content_text?: string;
+  labs?: LabDraftRow[] | null;
+  lab_error?: string | null;
+}
+
+export interface LabDraftRow {
+  test_name: string;
+  value: string | number | null;
+  unit?: string | null;
+  ref_low?: string | number | null;
+  ref_high?: string | number | null;
+  taken_at?: string | null;
 }
 
 export interface Doc {
@@ -53,4 +64,24 @@ export interface SearchItem {
   id: number;
   patient_id: number;
   title: string;
+}
+
+export type LabFlag = "normal" | "high" | "low" | "review";
+
+export interface PatientLab {
+  test_name: string;
+  value: number;
+  unit: string | null;
+  flag: LabFlag;
+  taken_at: string | null;
+  count: number;
+}
+
+export interface TrendPoint {
+  value: number;
+  flag: LabFlag;
+  unit: string | null;
+  ref_low: number | null;
+  ref_high: number | null;
+  taken_at: string;
 }

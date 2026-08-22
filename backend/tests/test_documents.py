@@ -4,21 +4,6 @@ from httpx import AsyncClient
 from app.config import settings
 from app.workers import tasks as worker_tasks
 
-
-class StubTask:
-    def __init__(self) -> None:
-        self.calls: list[str] = []
-
-    def delay(self, document_id: str) -> None:
-        self.calls.append(document_id)
-
-
-@pytest.fixture
-def stub_task(monkeypatch):
-    stub = StubTask()
-    monkeypatch.setattr(worker_tasks, "extract_document_task", stub)
-    return stub
-
 pytestmark = pytest.mark.asyncio
 
 IMAGE = b"\x89PNG\r\n\x1a\n" + b"x" * 64
@@ -50,7 +35,7 @@ async def test_extraction_success_flow(client, auth_headers, db_session, stub_ta
         await client.get("/api/documents?status=pending", headers=auth_headers)
     ).json()[0]["id"]
 
-    await worker_tasks._extract(doc_id)
+    await worker_tasks._run(doc_id, "full")
 
     doc = (
         await client.get("/api/documents?status=needs_review", headers=auth_headers)
@@ -82,7 +67,7 @@ async def test_extraction_failure_marks_failed_and_retry(
         await client.get("/api/documents?status=pending", headers=auth_headers)
     ).json()[0]["id"]
 
-    await worker_tasks._extract(doc_id)
+    await worker_tasks._run(doc_id, "full")
     failed = (await client.get("/api/documents?status=failed", headers=auth_headers)).json()
     assert failed[0]["error"] is not None
 

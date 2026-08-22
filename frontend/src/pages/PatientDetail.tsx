@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
-import type { Doc, Patient, TimelineEvent, EventType } from "../types";
+import TrendChart from "../components/TrendChart";
+import type { Doc, Patient, PatientLab, TimelineEvent, EventType, TrendPoint } from "../types";
 
 const BADGE: Record<EventType, string> = {
   visit: "bg-blue-100 text-blue-700",
@@ -20,6 +21,13 @@ const STATUS_PILL: Record<string, string> = {
   failed: "bg-red-100 text-red-700",
 };
 
+const FLAG_PILL: Record<string, string> = {
+  normal: "bg-green-100 text-green-700",
+  high: "bg-red-100 text-red-700",
+  low: "bg-amber-100 text-amber-700",
+  review: "bg-yellow-100 text-yellow-700",
+};
+
 function eventText(e: TimelineEvent): string {
   const p = e.payload ?? {};
   if (typeof p.summary === "string" && p.summary) return p.summary;
@@ -31,10 +39,11 @@ export default function PatientDetail() {
   const { id } = useParams();
   const pid = Number(id);
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"timeline" | "documents">("timeline");
+  const [tab, setTab] = useState<"timeline" | "documents" | "labs">("timeline");
   const [noteText, setNoteText] = useState("");
   const [noteDate, setNoteDate] = useState("");
   const [uploading, setUploading] = useState(0);
+  const [openTest, setOpenTest] = useState<string | null>(null);
 
   const { data: patient } = useQuery({
     queryKey: ["patient", pid],
@@ -55,6 +64,22 @@ export default function PatientDetail() {
       query.state.data?.some((d) => d.status === "pending" || d.status === "processing")
         ? 2000
         : false,
+  });
+
+  const { data: labs = [] } = useQuery({
+    queryKey: ["labs", pid],
+    queryFn: async () => (await api.get<PatientLab[]>(`/patients/${pid}/labs`)).data,
+  });
+
+  const { data: trend = [] } = useQuery({
+    queryKey: ["trend", pid, openTest],
+    queryFn: async () =>
+      (
+        await api.get<TrendPoint[]>(`/patients/${pid}/labs/trend`, {
+          params: { test_name: openTest },
+        })
+      ).data,
+    enabled: openTest != null,
   });
 
   const addNote = useMutation({
@@ -116,7 +141,7 @@ export default function PatientDetail() {
         </p>
 
         <div className="flex gap-2 mb-6 border-b border-slate-200">
-          {(["timeline", "documents"] as const).map((t) => (
+          {(["timeline", "documents", "labs"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -169,6 +194,46 @@ export default function PatientDetail() {
                     <span className="text-xs text-slate-400">{e.event_date ?? ""}</span>
                   </div>
                   <p className="text-sm whitespace-pre-wrap">{eventText(e)}</p>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === "labs" && (
+          <div className="space-y-3">
+            {labs.length === 0 ? (
+              <p className="text-slate-500">
+                No lab results yet. Confirm a lab report from the Documents tab.
+              </p>
+            ) : (
+              labs.map((l) => (
+                <div key={l.test_name} className="bg-white border border-slate-200 rounded-lg">
+                  <button
+                    onClick={() => setOpenTest(openTest === l.test_name ? null : l.test_name)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium">{l.test_name}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${FLAG_PILL[l.flag]}`}>
+                        {l.flag}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="font-semibold">
+                        {l.value} {l.unit ?? ""}
+                      </span>
+                      <span className="text-slate-400">{l.taken_at}</span>
+                      {l.count > 1 && (
+                        <span className="text-xs text-blue-600">{l.count} readings ▾</span>
+                      )}
+                    </div>
+                  </button>
+                  {openTest === l.test_name && (
+                    <div className="px-4 pb-4">
+                      <TrendChart points={trend} />
+                    </div>
+                  )}
                 </div>
               ))
             )}

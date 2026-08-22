@@ -1,6 +1,6 @@
 import datetime as dt
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -79,3 +79,27 @@ class AuditLog(Base):
     entity_id: Mapped[int | None]
     action: Mapped[str] = mapped_column(String(50))
     at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class LabTest(Base):
+    __tablename__ = "lab_tests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), unique=True)
+    unit: Mapped[str | None] = mapped_column(String(50))
+
+
+class LabResult(Base):
+    __tablename__ = "lab_results"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), nullable=False)
+    document_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id"))
+    test_name: Mapped[str] = mapped_column(String(200))
+    value: Mapped[float] = mapped_column(Numeric(12, 4))
+    unit: Mapped[str | None] = mapped_column(String(50))
+    ref_low: Mapped[float | None] = mapped_column(Numeric(12, 4))
+    ref_high: Mapped[float | None] = mapped_column(Numeric(12, 4))
+    flag: Mapped[str] = mapped_column(String(10), default="normal")
+    taken_at: Mapped[dt.date | None] = mapped_column(Date)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

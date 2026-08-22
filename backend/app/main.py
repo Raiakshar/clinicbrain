@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, documents, patients, search, timeline
+from app.routers import auth, documents, labs, patients, search, timeline
 
 app = FastAPI(title="ClinicBrain API")
 
@@ -12,7 +12,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (auth, patients, timeline, documents, search):
+for module in (auth, patients, timeline, documents, labs, search):
     app.include_router(module.router)
 
 

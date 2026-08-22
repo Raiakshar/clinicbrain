@@ -12,6 +12,19 @@ class ExtractedDocument(BaseModel):
     content_text: str = ""
 
 
+class LabRow(BaseModel):
+    test_name: str
+    value: str | float | None = None
+    unit: str | None = None
+    ref_low: str | float | None = None
+    ref_high: str | float | None = None
+    taken_at: date | None = None
+
+
+class LabExtraction(BaseModel):
+    rows: list[LabRow]
+
+
 class ExtractionError(Exception):
     pass
 
@@ -19,3 +32,6 @@ class ExtractionError(Exception):
 class BaseExtractionProvider(ABC):
     @abstractmethod
     async def extract(self, image: bytes, mime: str) -> ExtractedDocument: ...
+
+    @abstractmethod
+    async def extract_labs(self, image: bytes, mime: str) -> LabExtraction: ...
