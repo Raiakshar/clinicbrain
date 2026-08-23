@@ -1,7 +1,7 @@
 import datetime as dt
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,8 +14,16 @@ from app.workers.tasks import queue_message
 router = APIRouter(prefix="/api/queue", tags=["queue"])
 
 
+class NewPatientInfo(BaseModel):
+    name: str = Field(min_length=1, max_length=300)
+    phone: str | None = None
+    gender: str | None = None
+    dob: dt.date | None = None
+
+
 class CheckInRequest(BaseModel):
-    patient_id: int
+    patient_id: int | None = None
+    new_patient: NewPatientInfo | None = None
 
 
 def _today() -> dt.date:
@@ -41,15 +49,39 @@ async def check_in(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    patient = (
-        await db.scalars(
-            select(Patient).where(
-                Patient.id == body.patient_id, Patient.clinic_id == user.clinic_id
+    if body.new_patient and body.patient_id is None:
+        patient = None
+        if body.new_patient.phone:
+            patient = (
+                await db.scalars(
+                    select(Patient).where(
+                        Patient.clinic_id == user.clinic_id,
+                        Patient.phone == body.new_patient.phone.strip(),
+                    )
+                )
+            ).first()
+        if not patient:
+            patient = Patient(
+                clinic_id=user.clinic_id,
+                name=body.new_patient.name.strip(),
+                phone=body.new_patient.phone,
+                gender=body.new_patient.gender,
+                dob=body.new_patient.dob,
             )
-        )
-    ).first()
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+            db.add(patient)
+            await db.flush()
+    else:
+        if body.patient_id is None:
+            raise HTTPException(status_code=422, detail="patient_id or new_patient required")
+        patient = (
+            await db.scalars(
+                select(Patient).where(
+                    Patient.id == body.patient_id, Patient.clinic_id == user.clinic_id
+                )
+            )
+        ).first()
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
 
     existing = (
         await db.scalars(
@@ -61,7 +93,7 @@ async def check_in(
         )
     ).first()
     if existing:
-        return {"id": existing.id, "number": existing.number, "status": existing.status}
+        return {"id": existing.id, "number": existing.number, "status": existing.status, "patient_id": existing.patient_id}
 
     max_number = await db.scalar(
         select(func.max(QueueToken.number)).where(
@@ -87,7 +119,7 @@ async def check_in(
         f"Namaste {patient.name}, you are #{token.number} in the queue at {clinic.name} "
         f"for {_today().isoformat()}. - ClinicBrain",
     )
-    return {"id": token.id, "number": token.number, "status": token.status}
+    return {"id": token.id, "number": token.number, "status": token.status, "patient_id": patient.id}
 
 
 @router.get("/today")

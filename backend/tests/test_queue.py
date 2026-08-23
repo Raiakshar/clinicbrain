@@ -144,3 +144,43 @@ async def test_followup_reminder_sent_day_before_only_once(client, auth_headers,
     reminders = [e for e in logs if e["template"] == "followup_reminder"]
     assert len(reminders) == 1
     assert tomorrow.isoformat() in reminders[0]["body"]
+
+
+async def test_new_patient_walk_in_gets_token_in_one_step(client, auth_headers):
+    resp = await client.post(
+        "/api/queue/check-in",
+        headers=auth_headers,
+        json={"new_patient": {"name": "Walkin Ram", "phone": "9800000001"}},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["number"] >= 1
+    pid = data["patient_id"]
+    detail = (await client.get(f"/api/patients/{pid}", headers=auth_headers)).json()
+    assert detail["name"] == "Walkin Ram"
+
+    dup = await client.post(
+        "/api/queue/check-in",
+        headers=auth_headers,
+        json={"new_patient": {"name": "Walkin Ram", "phone": "9800000001"}},
+    )
+    assert dup.status_code == 200
+    assert dup.json()["patient_id"] == pid
+    assert dup.json()["id"] == data["id"]
+
+
+async def test_check_in_requires_patient_or_new(client, auth_headers):
+    resp = await client.post("/api/queue/check-in", headers=auth_headers, json={})
+    assert resp.status_code == 422
+
+
+async def test_walkin_with_existing_phone_reuses_patient(client, auth_headers):
+    pid = await _patient(client, auth_headers, "9877700123")
+    first = (
+        await client.post(
+            "/api/queue/check-in",
+            headers=auth_headers,
+            json={"new_patient": {"name": "Whatever", "phone": "9877700123"}},
+        )
+    ).json()
+    assert first["patient_id"] == pid

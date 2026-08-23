@@ -39,6 +39,9 @@ export default function Queue() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -78,6 +81,20 @@ export default function Queue() {
       setSearch("");
     },
     onError: () => flash("Check-in failed"),
+  });
+
+  const walkIn = useMutation({
+    mutationFn: async () =>
+      (await api.post("/queue/check-in", { new_patient: { name: newName, phone: newPhone || null } })).data,
+    onSuccess: (t) => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["patients"] });
+      flash(`Token #${t.number} issued for new patient`);
+      setNewName("");
+      setNewPhone("");
+      setShowNew(false);
+    },
+    onError: () => flash("Could not add patient"),
   });
 
   const call = useMutation({
@@ -147,7 +164,33 @@ export default function Queue() {
         </section>
 
         <section>
-          <h2 className="text-base font-bold mb-3 text-gradient">Check in a patient</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold mb-0 text-gradient">Check in a patient</h2>
+            <button onClick={() => setShowNew((s) => !s)} className={showNew ? "cb-btn-ghost !py-1.5" : "cb-btn !py-1.5"}>
+              {showNew ? "Cancel" : "+ New patient"}
+            </button>
+          </div>
+          {showNew && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newName.trim()) walkIn.mutate();
+              }}
+              className="cb-card p-4 mb-4 flex flex-wrap gap-3 items-end"
+            >
+              <div className="flex-1 min-w-[180px] space-y-1">
+                <label className="cb-label">Name *</label>
+                <input className="cb-input" placeholder="Patient full name" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+              </div>
+              <div className="w-44 space-y-1">
+                <label className="cb-label">Phone (unique ID)</label>
+                <input className="cb-input" placeholder="10-digit phone" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
+              </div>
+              <button disabled={!newName.trim() || walkIn.isPending} className="cb-btn">
+                Add &amp; give token
+              </button>
+            </form>
+          )}
           <form onSubmit={submitSearch}>
             <input
               className="cb-input"
@@ -158,7 +201,11 @@ export default function Queue() {
           </form>
           {search.length >= 2 && (
             <div className="mt-2 bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
-              {patients.length === 0 && <p className="px-4 py-2 text-sm text-slate-400">No matches.</p>}
+              {patients.length === 0 && (
+                <p className="px-4 py-2 text-sm text-slate-400">
+                  No matches — use “+ New patient” to register and get a token in one step.
+                </p>
+              )}
               {patients.map((p) => (
                 <div key={p.id} className="flex items-center justify-between px-4 py-2">
                   <span className="text-sm">
