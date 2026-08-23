@@ -3,6 +3,7 @@ import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
 import TrendChart from "../components/TrendChart";
+import RxPanel from "../components/RxPanel";
 import type { Doc, Patient, PatientLab, TimelineEvent, EventType, TrendPoint } from "../types";
 
 const BADGE: Record<EventType, string> = {
@@ -39,7 +40,7 @@ export default function PatientDetail() {
   const { id } = useParams();
   const pid = Number(id);
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"timeline" | "documents" | "labs">("timeline");
+  const [tab, setTab] = useState<"timeline" | "documents" | "labs" | "rx">("timeline");
   const [noteText, setNoteText] = useState("");
   const [noteDate, setNoteDate] = useState("");
   const [uploading, setUploading] = useState(0);
@@ -141,7 +142,7 @@ export default function PatientDetail() {
         </p>
 
         <div className="flex gap-2 mb-6 border-b border-slate-200">
-          {(["timeline", "documents", "labs"] as const).map((t) => (
+          {(["timeline", "documents", "labs", "rx"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -151,10 +152,12 @@ export default function PatientDetail() {
                   : "border-transparent text-slate-500 hover:text-slate-900"
               }`}
             >
-              {t}
+              {t === "rx" ? "Rx" : t}
             </button>
           ))}
         </div>
+
+        {tab === "rx" && <RxPanel pid={pid} />}
 
         {tab === "timeline" && (
           <div className="space-y-4">

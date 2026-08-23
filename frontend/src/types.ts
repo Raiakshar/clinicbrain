@@ -11,6 +11,35 @@ export interface Patient {
   phone: string | null;
   dob: string | null;
   gender: string | null;
+  allergies?: string[] | null;
+}
+
+export interface DrugRef {
+  id: number;
+  name: string;
+  generic_name: string | null;
+  drug_class: string | null;
+  max_daily_dose_mg: number | null;
+}
+
+export interface RxItem {
+  drug_name: string;
+  dose_mg: number;
+  frequency_per_day: number;
+  duration_days?: number | null;
+  instructions?: string | null;
+}
+
+export interface SafetyReport {
+  blocks: string[];
+  warnings: string[];
+}
+
+export interface PrescriptionOut {
+  id: number;
+  created_at: string | null;
+  notes: string | null;
+  items: RxItem[];
 }
 
 export type EventType = "visit" | "prescription" | "lab" | "document" | "note";
