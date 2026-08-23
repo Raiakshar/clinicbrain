@@ -8,7 +8,7 @@ Built for the realities of small clinics: photos of paper instead of typing, Wha
 
 **Deployed app:** https://pst-holdings-triple-consultant.trycloudflare.com
 
-Demo login — phone **`9811111111`** · password **`demo1234`**
+Demo login — phone **`9811111111`** · password **`######`**
 
 > This demo runs on a Cloudflare quick tunnel backed by a local machine, so the URL changes on restart and uptime follows that machine. For production, deploy the compose stack to Fly.io / Render / any Docker host.
 
