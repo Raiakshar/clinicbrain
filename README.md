@@ -4,6 +4,14 @@
 
 Built for the realities of small clinics: photos of paper instead of typing, WhatsApp instead of phone tag, and AI drafts instead of AI decisions.
 
+## Live demo
+
+**Deployed app:** https://pst-holdings-triple-consultant.trycloudflare.com
+
+Demo login — phone **`9811111111`** · password **`demo1234`**
+
+> This demo runs on a Cloudflare quick tunnel backed by a local machine, so the URL changes on restart and uptime follows that machine. For production, deploy the compose stack to Fly.io / Render / any Docker host.
+
 ---
 
 ## Why doctors use it
