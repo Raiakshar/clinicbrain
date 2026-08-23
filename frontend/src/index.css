@@ -3,5 +3,86 @@
 @tailwind utilities;
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-slate-950 text-slate-100 antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  @apply bg-teal-400/30 text-white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #020617;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.4);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+
+select option {
+  @apply bg-slate-900 text-slate-100;
+}
+
+@layer components {
+  .cb-card {
+    @apply bg-white/[0.05] backdrop-blur-xl border border-white/10 rounded-2xl shadow-glass;
+  }
+  .cb-card-hover {
+    @apply transition duration-300 hover:-translate-y-1 hover:border-teal-300/40 hover:shadow-glow;
+  }
+  .cb-input {
+    @apply w-full bg-white/[0.06] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-300/60 focus:ring-1 focus:ring-teal-300/40 transition;
+  }
+  .cb-btn {
+    @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-teal-400 to-blue-500 text-slate-950 font-semibold rounded-xl px-5 py-2.5 text-sm transition duration-300 hover:shadow-glow hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none;
+  }
+  .cb-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 border border-white/15 bg-white/[0.04] backdrop-blur text-slate-200 font-medium rounded-xl px-4 py-2.5 text-sm transition duration-300 hover:bg-white/10 hover:border-white/25 active:scale-[0.98];
+  }
+  .cb-label {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-400;
+  }
+  .cb-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-medium text-slate-300;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-teal-300 via-sky-400 to-violet-400 bg-clip-text text-transparent;
+  }
+  .perspective-1200 {
+    perspective: 1200px;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .tilt-hero {
+    transform: rotateY(-9deg) rotateX(6deg);
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .tilt-hero:hover {
+    transform: rotateY(0deg) rotateX(0deg);
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
 }

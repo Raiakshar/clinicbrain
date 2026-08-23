@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import AppShell from "../components/AppShell";
 import { FormEvent, useState } from "react";
-import { Link } from "react-router-dom";
 import { api } from "../api";
 import type { Patient } from "../types";
 
@@ -100,23 +100,8 @@ export default function Queue() {
   };
 
   return (
-    <div className="min-h-screen">
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/patients" className="font-bold text-slate-900">
-            ClinicBrain
-          </Link>
-          <div className="flex items-center gap-6 text-sm">
-            <Link to="/patients" className="text-slate-600 hover:text-slate-900">
-              Patients
-            </Link>
-            <span className="text-blue-600 font-medium">Queue</span>
-            <Link to="/review" className="text-slate-600 hover:text-slate-900">
-              Review
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <AppShell>
+      
 
       {toast && (
         <div className="fixed top-16 right-6 bg-slate-900 text-white px-4 py-2 rounded-lg shadow z-50 text-sm">
@@ -126,11 +111,11 @@ export default function Queue() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         <section>
-          <h1 className="text-xl font-bold mb-4">Today&apos;s queue</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight mb-5">Today&apos;s queue</h1>
           {queue.length === 0 ? (
-            <p className="text-slate-500">Nobody checked in yet.</p>
+            <p className="text-slate-400">Nobody checked in yet.</p>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
+            <div className="cb-card divide-y divide-white/[0.08]">
               {queue.map((q) => (
                 <div key={q.id} className="flex items-center gap-4 px-4 py-3">
                   <span className="text-2xl font-bold text-slate-300 w-10">#{q.number}</span>
@@ -141,7 +126,7 @@ export default function Queue() {
                   {q.status === "waiting" && (
                     <button
                       onClick={() => call.mutate(q.id)}
-                      className="text-sm bg-blue-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-blue-700"
+                      className="text-sm cb-btn !px-3 !py-1.5"
                     >
                       Call
                     </button>
@@ -149,7 +134,7 @@ export default function Queue() {
                   {q.status === "in_consult" && (
                     <button
                       onClick={() => complete.mutate(q.id)}
-                      className="text-sm bg-green-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-green-700"
+                      className="text-sm cb-btn !px-3 !py-1.5"
                     >
                       Complete
                     </button>
@@ -162,10 +147,10 @@ export default function Queue() {
         </section>
 
         <section>
-          <h2 className="text-lg font-bold mb-3">Check in a patient</h2>
+          <h2 className="text-base font-bold mb-3 text-gradient">Check in a patient</h2>
           <form onSubmit={submitSearch}>
             <input
-              className="w-full border border-slate-200 rounded-lg px-4 py-2"
+              className="cb-input"
               placeholder="Type at least 2 characters to search patients..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -181,7 +166,7 @@ export default function Queue() {
                   </span>
                   <button
                     onClick={() => checkIn.mutate(p.id)}
-                    className="text-sm border border-blue-600 text-blue-600 rounded-lg px-3 py-1 hover:bg-blue-50"
+                    className="text-sm cb-btn-ghost !px-3 !py-1 !border-teal-300/40 !text-teal-300 hover:!bg-teal-400/10"
                   >
                     Check in
                   </button>
@@ -192,11 +177,11 @@ export default function Queue() {
         </section>
 
         <section>
-          <h2 className="text-lg font-bold mb-3">WhatsApp messages</h2>
+          <h2 className="text-base font-bold mb-3 text-gradient">WhatsApp messages</h2>
           {waLog.length === 0 ? (
-            <p className="text-slate-500">No messages yet.</p>
+            <p className="text-slate-400">No messages yet.</p>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
+            <div className="cb-card divide-y divide-white/[0.08]">
               {waLog.map((w) => (
                 <div key={w.id} className="px-4 py-3 flex items-start gap-3">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-0.5 ${WA_STATUS[w.status]}`}>
@@ -217,6 +202,6 @@ export default function Queue() {
           )}
         </section>
       </main>
-    </div>
+    </AppShell>
   );
 }

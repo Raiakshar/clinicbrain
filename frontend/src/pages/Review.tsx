@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import AppShell from "../components/AppShell";
 import { FormEvent, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import type { Doc, LabDraftRow } from "../types";
 
@@ -123,15 +124,8 @@ export default function Review() {
   };
 
   return (
-    <div className="min-h-screen">
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/patients" className="font-bold text-slate-900">
-            ClinicBrain
-          </Link>
-          <span className="text-sm text-slate-500">{queue.length} to review</span>
-        </div>
-      </nav>
+    <AppShell>
+      
 
       {toast && (
         <div className="fixed top-16 right-6 bg-green-600 text-white px-4 py-2 rounded-lg shadow z-50 text-sm">
@@ -254,7 +248,7 @@ export default function Review() {
                     )}
                   </div>
                   <label className="block text-sm">
-                    <span className="text-slate-500">Date on report</span>
+                    <span className="text-slate-400">Date on report</span>
                     <input
                       type="date"
                       className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
@@ -266,7 +260,7 @@ export default function Review() {
               ) : (
                 <>
                   <label className="block text-sm">
-                    <span className="text-slate-500">Document type</span>
+                    <span className="text-slate-400">Document type</span>
                     <select
                       className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
                       value={form.document_type}
@@ -280,7 +274,7 @@ export default function Review() {
                     </select>
                   </label>
                   <label className="block text-sm">
-                    <span className="text-slate-500">Date on document</span>
+                    <span className="text-slate-400">Date on document</span>
                     <input
                       type="date"
                       className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
@@ -289,7 +283,7 @@ export default function Review() {
                     />
                   </label>
                   <label className="block text-sm">
-                    <span className="text-slate-500">Summary</span>
+                    <span className="text-slate-400">Summary</span>
                     <input
                       className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2"
                       value={form.summary}
@@ -297,7 +291,7 @@ export default function Review() {
                     />
                   </label>
                   <label className="block text-sm">
-                    <span className="text-slate-500">Extracted text</span>
+                    <span className="text-slate-400">Extracted text</span>
                     <textarea
                       rows={12}
                       className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 font-mono text-xs"
@@ -331,6 +325,6 @@ export default function Review() {
           </section>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }

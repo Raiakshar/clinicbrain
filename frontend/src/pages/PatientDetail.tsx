@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import AppShell from "../components/AppShell";
 import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
@@ -121,22 +122,11 @@ export default function PatientDetail() {
   };
 
   return (
-    <div className="min-h-screen">
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/patients" className="font-bold text-slate-900">
-            ClinicBrain
-          </Link>
-          <div className="flex items-center gap-6 text-sm">
-            <Link to="/review" className="text-slate-600 hover:text-slate-900">
-              Review Queue
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <AppShell>
+      
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <h1 className="text-xl font-bold">{patient?.name ?? "..."}</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight">{patient?.name ?? "..."}</h1>
         <p className="text-sm text-slate-500 mb-6">
           {[patient?.phone, patient?.dob, patient?.gender].filter(Boolean).join(" · ")}
         </p>
@@ -161,9 +151,9 @@ export default function PatientDetail() {
 
         {tab === "timeline" && (
           <div className="space-y-4">
-            <form onSubmit={submitNote} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+            <form onSubmit={submitNote} className="cb-card p-4 space-y-3">
               <textarea
-                className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                className="cb-input"
                 rows={2}
                 placeholder="Add a note to the timeline..."
                 value={noteText}
@@ -172,7 +162,7 @@ export default function PatientDetail() {
               <div className="flex gap-3 items-center">
                 <input
                   type="date"
-                  className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm"
+                  className="cb-input !px-3 !py-1.5 !text-sm"
                   value={noteDate}
                   onChange={(e) => setNoteDate(e.target.value)}
                 />
@@ -186,7 +176,7 @@ export default function PatientDetail() {
             </form>
 
             {events.length === 0 ? (
-              <p className="text-slate-500">No history yet.</p>
+              <p className="text-slate-400">No history yet.</p>
             ) : (
               events.map((e) => (
                 <div key={e.id} className="bg-white border border-slate-200 rounded-lg p-4">
@@ -206,7 +196,7 @@ export default function PatientDetail() {
         {tab === "labs" && (
           <div className="space-y-3">
             {labs.length === 0 ? (
-              <p className="text-slate-500">
+              <p className="text-slate-400">
                 No lab results yet. Confirm a lab report from the Documents tab.
               </p>
             ) : (
@@ -280,7 +270,7 @@ export default function PatientDetail() {
                 {d.status === "failed" && (
                   <button
                     onClick={() => retry.mutate(d.id)}
-                    className="text-sm border border-slate-300 rounded-lg px-3 py-1.5 hover:bg-slate-50"
+                    className="text-sm cb-btn-ghost !px-3 !py-1.5"
                   >
                     Retry
                   </button>
@@ -288,7 +278,7 @@ export default function PatientDetail() {
                 {d.status === "needs_review" && (
                   <Link
                     to={`/review?doc=${d.id}`}
-                    className="text-sm bg-blue-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-blue-700"
+                    className="text-sm cb-btn !px-3 !py-1.5"
                   >
                     Review
                   </Link>
@@ -298,6 +288,6 @@ export default function PatientDetail() {
           </div>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }
