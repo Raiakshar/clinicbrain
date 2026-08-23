@@ -7,7 +7,7 @@ from sqlalchemy.pool import NullPool
 from app.config import settings
 from app.db import get_db
 from app.main import app
-from app.models import Base
+from app.models import Base, DrugReference
 from app.services.storage import get_storage
 from app.workers import tasks as worker_tasks
 
@@ -63,6 +63,20 @@ async def db_session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+        from scripts.seed_drugs import DRUGS
+
+        await conn.execute(
+            DrugReference.__table__.insert(),
+            [
+                {
+                    "name": n,
+                    "generic_name": g,
+                    "drug_class": c,
+                    "max_daily_dose_mg": m,
+                }
+                for n, g, c, m in DRUGS
+            ],
+        )
         for ddl in SEARCH_DDL:
             await conn.execute(text(ddl))
 

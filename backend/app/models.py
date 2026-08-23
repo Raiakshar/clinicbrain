@@ -106,6 +106,38 @@ class LabResult(Base):
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class DrugReference(Base):
+    __tablename__ = "drug_reference"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), unique=True)
+    generic_name: Mapped[str | None] = mapped_column(String(200))
+    drug_class: Mapped[str | None] = mapped_column(String(100))
+    max_daily_dose_mg: Mapped[float | None] = mapped_column(Numeric(12, 2))
+
+
+class Prescription(Base):
+    __tablename__ = "prescriptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"), nullable=False)
+    prescriber_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PrescriptionItem(Base):
+    __tablename__ = "prescription_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    prescription_id: Mapped[int] = mapped_column(ForeignKey("prescriptions.id"), nullable=False)
+    drug_name: Mapped[str] = mapped_column(String(200))
+    dose_mg: Mapped[float] = mapped_column(Numeric(12, 2))
+    frequency_per_day: Mapped[int] = mapped_column(default=1)
+    duration_days: Mapped[int | None]
+    instructions: Mapped[str | None] = mapped_column(Text)
+
+
 class QueueToken(Base):
     __tablename__ = "queue_tokens"
 

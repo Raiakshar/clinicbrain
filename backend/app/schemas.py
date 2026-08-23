@@ -41,6 +41,7 @@ class PatientCreate(BaseModel):
 class PatientOut(PatientCreate):
     id: int
     whatsapp_consent: bool | None = None
+    allergies: list[str] | None = None
 
     model_config = {"from_attributes": True}
 
@@ -70,3 +71,25 @@ class SearchItem(BaseModel):
     id: int
     patient_id: int
     title: str
+
+
+class RxItemIn(BaseModel):
+    drug_name: str = Field(min_length=1, max_length=200)
+    dose_mg: float = Field(gt=0)
+    frequency_per_day: int = Field(default=1, ge=1, le=12)
+    duration_days: int | None = Field(default=None, ge=1)
+    instructions: str | None = Field(default=None, max_length=1000)
+
+
+class RxCheckRequest(BaseModel):
+    items: list[RxItemIn] = Field(min_length=1)
+
+
+class RxSaveRequest(RxCheckRequest):
+    notes: str | None = Field(default=None, max_length=2000)
+    followup_date: dt.date | None = None
+    acknowledged_warnings: bool = False
+
+
+class AllergiesUpdate(BaseModel):
+    allergies: list[str]
